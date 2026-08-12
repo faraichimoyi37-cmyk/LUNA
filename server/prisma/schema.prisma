@@ -1,0 +1,363 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  AGENT
+  ADMIN
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  INVESTMENT
+  PROFIT
+  MATURITY
+  REFERRAL
+  ADJUSTMENT
+  BONUS
+  LUCKY
+  SPIN
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VoucherStatus {
+  ACTIVE
+  USED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+model User {
+  id           String      @id @default(uuid())
+  fullname     String
+  email        String      @unique
+  phone        String?
+  password     String
+  role         Role        @default(USER)
+  balance      Decimal     @default(0)
+  status       UserStatus  @default(ACTIVE)
+  tokenVersion Int         @default(0)
+  referralCode String      @unique
+  referredById String?
+  referredBy   User?       @relation("Referrals", fields: [referredById], references: [id])
+  referrals    User[]      @relation("Referrals")
+  kyc          Kyc?
+  settings     UserSettings?
+  investments  Investment[]
+  deposits     Deposit[]
+  withdrawals  Withdrawal[]
+  transactions Transaction[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  createdVouchers Voucher[] @relation("CreatedVouchers")
+  usedVouchers    Voucher[] @relation("UsedVouchers")
+  createdPromoCodes PromoCode[] @relation("CreatedPromoCodes")
+  promoUsages     PromoUsage[]
+  agentApplication AgentApplication?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([referredById])
+  @@index([createdAt])
+}
+
+model UserSettings {
+  userId           String   @id
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language         String   @default("en")
+  notificationsOn  Boolean  @default(true)
+  twoFactorEnabled Boolean  @default(false)
+  updatedAt        DateTime @updatedAt
+}
+
+model AgentApplication {
+  id          String            @id @default(uuid())
+  userId      String            @unique
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Personal Information & Identity
+  fullName           String
+  email              String
+  phone              String
+  address            String
+  idType             String
+  idNumber           String
+  idDocumentUrl      String?
+  proofOfAddressUrl  String?
+
+  // Financial & Fee Requirements
+  applicationFeeAmount Decimal @default(0)
+  applicationFeeTx     String?
+  registrationFeeAck   Boolean @default(false)
+
+  // Professional Qualifications
+  education           String
+  resumeUrl           String?
+  referenceOneName    String
+  referenceOneContact String
+  referenceTwoName    String
+  referenceTwoContact String
+
+  // Legal & Compliance
+  tin                  String
+  criminalRecordOk     Boolean @default(false)
+  license              String?
+  businessRegistration String?
+
+  // Infrastructure & Tools
+  hasDevice   Boolean @default(false)
+  hasInternet Boolean @default(false)
+  banking     String
+
+  status      ApplicationStatus @default(PENDING)
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Package {
+  id               String       @id @default(uuid())
+  name             String
+  description      String?
+  icon             String?
+  investmentAmount Decimal     
+  dailyPercentage  Decimal     
+  durationDays     Int
+  totalReturn      Decimal     
+  status           Boolean      @default(true)
+  investments      Investment[]
+  createdAt        DateTime     @default(now())
+}
+
+model Investment {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packageId      String?
+  package        Package?         @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  packageName    String
+  amount         Decimal         
+  dailyProfit    Decimal         
+  totalReturn    Decimal         
+  startDate      DateTime
+  endDate        DateTime
+  lastProfitDate DateTime?
+  status         InvestmentStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Deposit {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Decimal      
+  method    String
+  txRef     String?
+  status    PaymentStatus @default(PENDING)
+  meta      Json?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Withdrawal {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount        Decimal      
+  fee           Decimal       @default(0)
+  walletAddress String
+  network       String?
+  status        PaymentStatus @default(PENDING)
+  processedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Transaction {
+  id           String          @id @default(uuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         TransactionType
+  amount       Decimal        
+  balanceAfter Decimal?       
+  status       PaymentStatus   @default(APPROVED)
+  reference    String?
+  meta         Json?
+  createdAt    DateTime        @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+}
+
+model Kyc {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName       String
+  documentType   String
+  documentNumber String
+  country        String?
+  documents      Json
+  status         KycStatus @default(PENDING)
+  adminNote      String?
+  submittedAt    DateTime  @default(now())
+  reviewedAt     DateTime?
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  actorRole String?
+  action    String
+  ip        String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model SystemSetting {
+  key   String @id
+  value Json
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now())
+}
+
+model VerificationCode {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  purpose   String   @default("REGISTER")
+  delivered Boolean  @default(false)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose])
+}
+
+model Voucher {
+  id          String        @id @default(uuid())
+  code        String        @unique
+  amount      Decimal
+  status      VoucherStatus @default(ACTIVE)
+  maxUses     Int           @default(1)
+  usedCount   Int           @default(0)
+  createdById String?
+  createdBy   User?         @relation("CreatedVouchers", fields: [createdById], references: [id], onDelete: SetNull)
+  usedById    String?
+  usedBy      User?         @relation("UsedVouchers", fields: [usedById], references: [id], onDelete: SetNull)
+  usedAt      DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([status])
+}
+
+model PromoCode {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  percent     Int
+  amount      Decimal  @default(0)
+  maxUses     Int      @default(100)
+  usedCount   Int      @default(0)
+  expiresAt   DateTime?
+  status      Boolean  @default(true)
+  createdById String?
+  createdBy   User?    @relation("CreatedPromoCodes", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  usages      PromoUsage[]
+}
+
+model PromoUsage {
+  id        String   @id @default(uuid())
+  promoId   String
+  userId    String
+  promo     PromoCode @relation(fields: [promoId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([promoId, userId])
+}

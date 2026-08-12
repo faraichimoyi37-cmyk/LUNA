@@ -1,0 +1,23 @@
+{
+  "name": "luna",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "bun run --filter @luna/server dev & bun run --filter @luna/web dev",
+    "dev:server": "bun run --filter @luna/server dev",
+    "dev:web": "bun run --filter @luna/web dev",
+    "build": "bun run --filter @luna/web build",
+    "typecheck": "bun run --filter @luna/server typecheck && bun run --filter @luna/web typecheck",
+    "db:generate": "bun run --filter @luna/server db:generate",
+    "db:migrate": "bun run --filter @luna/server db:migrate",
+    "db:deploy": "bun run --filter @luna/server db:deploy",
+    "db:seed": "bun run --filter @luna/server db:seed",
+    "db:studio": "bun run --filter @luna/server db:studio",
+    "postinstall": "bun run --filter @luna/server db:generate"
+  }
+}

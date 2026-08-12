@@ -1,0 +1,17 @@
+export const env = {
+  NODE_ENV: process.env.NODE_ENV ?? 'development',
+  PORT: Number(process.env.PORT ?? 3000),
+  DATABASE_URL: process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/luna?schema=public',
+  JWT_SECRET: process.env.JWT_SECRET ?? 'luna-dev-secret-change-me',
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN ?? '7d',
+  CORS_ORIGIN: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+  APP_URL: process.env.APP_URL ?? 'http://localhost:5173',
+  SMTP_HOST: process.env.SMTP_HOST ?? '',
+  SMTP_PORT: Number(process.env.SMTP_PORT ?? 587),
+  SMTP_USER: process.env.SMTP_USER ?? '',
+  SMTP_PASS: process.env.SMTP_PASS ?? '',
+  SMTP_FROM: process.env.SMTP_FROM ?? 'LUNA <no-reply@luna.finance>',
+  BIRD_API_KEY: process.env.BIRD_API_KEY ?? '',
+  BIRD_REGION: process.env.BIRD_REGION ?? 'us1',
+  BIRD_FROM: process.env.BIRD_FROM ?? 'LUNA <onboarding@messagebird.dev>',
+}
