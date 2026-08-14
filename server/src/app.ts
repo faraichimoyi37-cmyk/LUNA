@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { createBunWebSocket } from 'hono/bun'
-import type { ServerWebSocket } from 'bun'
+import { createNodeWebSocket } from '@hono/node-ws'
+import { existsSync, readFileSync, statSync } from 'node:fs'
+import { extname, join, normalize } from 'node:path'
 import type { AppEnv } from './types'
 import { env } from './config/env'
 import { prisma } from './config/prisma'
@@ -27,9 +28,9 @@ import luckyRoutes from './routes/lucky'
 import spinRoutes from './routes/spin'
 import agentsRoutes from './routes/agents'
 
-const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>()
-
 const app = new Hono<AppEnv>()
+
+const { upgradeWebSocket, injectWebSocket } = createNodeWebSocket({ app })
 
 app.use(
   '*',
@@ -100,4 +101,68 @@ app.get(
 app.notFound((c) => fail(c, 404, 'Route not found'))
 app.onError(errorHandler)
 
-export { app, websocket }
+// --------------------------------------------------------------- seo
+function requestOrigin(c: { req: { header: (name: string) => string | undefined } }): string {
+  const host = c.req.header('Host') ?? 'localhost:3000'
+  const proto = c.req.header('x-forwarded-proto') ?? 'http'
+  return `${proto}://${host}`
+}
+
+app.get('/robots.txt', (c) => {
+  const body = [
+    'User-agent: *',
+    'Allow: /',
+    'Disallow: /api/',
+    'Disallow: /ws',
+    'Disallow: /dashboard',
+    'Disallow: /admin',
+    '',
+    `Sitemap: ${requestOrigin(c)}/sitemap.xml`,
+    '',
+  ].join('\n')
+  return c.text(body)
+})
+
+app.get('/sitemap.xml', (c) => {
+  const origin = requestOrigin(c)
+  const pages = ['/', '/login', '/register']
+  const urls = pages
+    .map(
+      (p) =>
+        `  <url><loc>${origin}${p}</loc><changefreq>weekly</changefreq><priority>${p === '/' ? '1.0' : '0.7'}</priority></url>`,
+    )
+    .join('\n')
+  const xml =
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`
+  return c.body(xml, 200, { 'Content-Type': 'application/xml; charset=utf-8' })
+})
+
+// --------------------------------------------------------------- static web
+const webDist = join(import.meta.dirname, '../../web/dist')
+const mimeTypes: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.json': 'application/json',
+  '.webmanifest': 'application/manifest+json',
+  '.woff2': 'font/woff2',
+}
+
+app.get('*', (c) => {
+  const url = c.req.path
+  if (url.startsWith('/api') || url.startsWith('/ws')) return c.notFound()
+  let filePath = normalize(join(webDist, url === '/' ? 'index.html' : url))
+  if (!filePath.startsWith(webDist)) return c.notFound()
+  if (!existsSync(filePath) || statSync(filePath).isDirectory()) filePath = join(webDist, 'index.html')
+  const body = readFileSync(filePath)
+  c.header('Content-Type', mimeTypes[extname(filePath)] ?? 'application/octet-stream')
+  c.header('Cache-Control', filePath.endsWith('index.html') ? 'no-cache' : 'public, max-age=31536000, immutable')
+  return c.body(body)
+})
+
+export { app, injectWebSocket }

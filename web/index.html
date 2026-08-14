@@ -3,14 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>LUNA — Modern Investment Platform | Earn Daily Returns on USDT</title>
     <meta
       name="description"
-      content="LUNA — a modern digital investment platform. Deposit USDT, invest in packages and earn daily returns."
+      content="LUNA is a modern digital investment platform. Deposit USDT, invest in curated packages and earn daily returns with full transparency and 24/7 access."
     />
+    <meta
+      name="keywords"
+      content="LUNA, investment platform, USDT investment, crypto investment, daily returns, passive income, earn interest, online investment"
+    />
+    <meta name="author" content="LUNA" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <meta name="theme-color" content="#0B1020" />
-    <meta property="og:title" content="LUNA Investment Platform" />
-    <meta property="og:description" content="Deposit, invest and earn daily returns with LUNA." />
-    <meta property="og:type" content="website" />
+    <meta name="application-name" content="LUNA" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <link rel="canonical" id="canonical" href="/" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="apple-touch-icon" href="/pwa-192.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -19,7 +28,74 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <title>LUNA — Modern Investment Platform</title>
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="LUNA" />
+    <meta property="og:title" content="LUNA — Modern Investment Platform" />
+    <meta
+      property="og:description"
+      content="Deposit USDT, invest in curated packages and earn daily returns. Secure, transparent and available 24/7."
+    />
+    <meta property="og:image" content="/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="LUNA — Modern Investment Platform" />
+    <meta property="og:url" content="/" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="LUNA — Modern Investment Platform" />
+    <meta
+      name="twitter:description"
+      content="Deposit USDT, invest in curated packages and earn daily returns. Secure, transparent and available 24/7."
+    />
+    <meta name="twitter:image" content="/og.png" />
+
+    <!-- Make canonical / og:url / og:image absolute for the current domain or tunnel -->
+    <script>
+      ;(function () {
+        try {
+          var origin = window.location.origin
+          var path = window.location.pathname
+          var canon = document.getElementById('canonical')
+          if (canon) canon.setAttribute('href', origin + path)
+          document.querySelectorAll('meta[property="og:url"]').forEach(function (m) {
+            m.setAttribute('content', origin + path)
+          })
+          document
+            .querySelectorAll('meta[property="og:image"], meta[name="twitter:image"]')
+            .forEach(function (m) {
+              m.setAttribute('content', origin + '/og.png')
+            })
+          var ld = document.getElementById('seo-jsonld')
+          if (ld) ld.textContent = JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'WebSite',
+                name: 'LUNA',
+                url: origin + '/',
+                description: 'LUNA is a modern digital investment platform. Deposit USDT, invest in curated packages and earn daily returns.',
+                inLanguage: 'en',
+              },
+              {
+                '@type': 'Organization',
+                name: 'LUNA',
+                url: origin + '/',
+                logo: { '@type': 'ImageObject', url: origin + '/logo.svg' },
+              },
+            ],
+          })
+        } catch (e) {
+          /* noop */
+        }
+      })()
+    </script>
+    <script type="application/ld+json" id="seo-jsonld"></script>
+    <title>LUNA — Modern Investment Platform | Earn Daily Returns on USDT</title>
   </head>
   <body>
     <div id="root"></div>

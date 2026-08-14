@@ -4,6 +4,7 @@ import type { AppEnv } from '../types'
 import { prisma } from '../config/prisma'
 import { ok } from '../utils/http'
 import { validateBody } from '../middleware/validate'
+import { logAudit } from '../utils/audit'
 
 const support = new Hono<AppEnv>()
 
@@ -28,6 +29,14 @@ const contactSchema = z.object({
 support.post('/contact', validateBody(contactSchema), async (c) => {
   const body = c.get('validated') as z.infer<typeof contactSchema>
   const message = await prisma.contactMessage.create({ data: body })
+  const user = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() }, select: { id: true } })
+  await logAudit({
+    userId: user?.id,
+    actorRole: 'USER',
+    action: 'support.contact',
+    meta: { subject: body.subject },
+    ip: c.req.header('x-forwarded-for'),
+  })
   return ok(c, message)
 })
 

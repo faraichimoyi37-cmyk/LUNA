@@ -8,16 +8,27 @@
     "web"
   ],
   "scripts": {
-    "dev": "bun run --filter @luna/server dev & bun run --filter @luna/web dev",
-    "dev:server": "bun run --filter @luna/server dev",
-    "dev:web": "bun run --filter @luna/web dev",
-    "build": "bun run --filter @luna/web build",
-    "typecheck": "bun run --filter @luna/server typecheck && bun run --filter @luna/web typecheck",
-    "db:generate": "bun run --filter @luna/server db:generate",
-    "db:migrate": "bun run --filter @luna/server db:migrate",
-    "db:deploy": "bun run --filter @luna/server db:deploy",
-    "db:seed": "bun run --filter @luna/server db:seed",
-    "db:studio": "bun run --filter @luna/server db:studio",
-    "postinstall": "bun run --filter @luna/server db:generate"
+    "dev": "concurrently -k -n server,web -c blue,green \"npm run dev -w @luna/server\" \"npm run dev -w @luna/web\"",
+    "dev:server": "npm run dev -w @luna/server",
+    "dev:web": "npm run dev -w @luna/web",
+    "build": "npm run build -w @luna/server && npm run build -w @luna/web",
+    "start": "npm run start -w @luna/server",
+    "typecheck": "npm run typecheck -w @luna/server && npm run typecheck -w @luna/web",
+    "db:generate": "npm run db:generate -w @luna/server",
+    "db:migrate": "npm run db:migrate -w @luna/server",
+    "db:deploy": "npm run db:deploy -w @luna/server",
+    "db:seed": "npm run db:seed -w @luna/server",
+    "db:studio": "npm run db:studio -w @luna/server",
+    "postinstall": "npm run db:generate -w @luna/server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
+    "prisma@6.19.3": true
   }
 }

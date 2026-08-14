@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6C63FF"/>
+      <stop offset="0.5" stop-color="#00D4FF"/>
+      <stop offset="1" stop-color="#00E5A8"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#6C63FF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#6C63FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#00E5A8" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#00E5A8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0B1020"/>
+  <circle cx="200" cy="180" r="420" fill="url(#glow1)"/>
+  <circle cx="1050" cy="520" r="380" fill="url(#glow2)"/>
+  <circle cx="950" cy="90" r="260" fill="url(#glow1)"/>
+
+  <g opacity="0.06" fill="none" stroke="#FFFFFF" stroke-width="2">
+    <circle cx="1080" cy="70" r="260"/>
+    <circle cx="1080" cy="70" r="200"/>
+    <circle cx="1080" cy="70" r="140"/>
+  </g>
+
+  <svg x="80" y="245" width="140" height="140" viewBox="0 0 64 64">
+    <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#g)"/>
+    <path d="M32 14 L46 50 H40 L32 28 L24 50 H18 Z" fill="#0B1020"/>
+  </svg>
+
+  <text x="270" y="360" font-family="Inter, Arial, sans-serif" font-size="104" font-weight="800" letter-spacing="2" fill="url(#g)">LUNA</text>
+  <text x="272" y="416" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="600" fill="#E6E9F2">Modern Investment Platform</text>
+  <text x="272" y="470" font-family="Inter, Arial, sans-serif" font-size="27" font-weight="400" fill="#8A94B0">Deposit USDT &#8226; Invest in curated packages &#8226; Earn daily returns</text>
+
+  <rect x="272" y="500" width="120" height="6" rx="3" fill="url(#g)"/>
+</svg>

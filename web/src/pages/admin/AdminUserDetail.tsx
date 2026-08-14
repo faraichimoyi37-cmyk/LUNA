@@ -1,12 +1,51 @@
 import { useState } from 'react'
-import { App, Button, Descriptions, Drawer, Empty, Form, Input, InputNumber, Modal, Select, Spin, Switch, Table, Tabs } from 'antd'
+import { App, Button, Descriptions, Drawer, Empty, Form, Input, InputNumber, Modal, Select, Spin, Switch, Table, Tabs, Tag } from 'antd'
 import { KeyRound, Bell, Pencil } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useAdminUser, queryKeys } from '../../hooks/queries'
+import { useAdminUser, useAdminUserActivity, queryKeys } from '../../hooks/queries'
 import { api, errMsg } from '../../lib/api'
 import { StatusTag } from '../../components/ui/StatusTag'
 import { formatDate, formatDateTime, formatMoney, formatMoneySigned, shortId } from '../../lib/format'
-import type { Transaction } from '../../lib/types'
+import type { AuditLog, Transaction } from '../../lib/types'
+
+const ACTION_LABELS: Record<string, string> = {
+  'auth.register': 'Registered an account',
+  'auth.login': 'Logged in',
+  'auth.change_password': 'Changed password',
+  'auth.logout': 'Logged out',
+  'deposit.create': 'Created a deposit',
+  'withdrawal.create': 'Requested a withdrawal',
+  'investment.purchase': 'Purchased an investment',
+  'lucky.open': 'Opened a Lucky Box',
+  'spin.spin': 'Spun the wheel',
+  'voucher.redeem': 'Redeemed a gift code',
+  'promo.redeem': 'Redeemed a promo code',
+  'agent.apply': 'Applied to become an agent',
+  'kyc.submit': 'Submitted KYC verification',
+  'support.contact': 'Sent a support message',
+  'profile.update': 'Updated profile',
+  'users.settings': 'Updated account settings',
+}
+
+function actionLabel(action: string): string {
+  return ACTION_LABELS[action] ?? action.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function actionTone(action: string): string {
+  if (action.startsWith('admin.')) return 'gold'
+  if (action.includes('deposit') || action.includes('investment') || action.includes('withdrawal')) return 'blue'
+  if (action.includes('login') || action.includes('register') || action.includes('change_password')) return 'purple'
+  return 'default'
+}
+
+function renderMeta(meta?: Record<string, unknown> | null): string {
+  if (!meta) return '—'
+  try {
+    return JSON.stringify(meta)
+  } catch {
+    return '—'
+  }
+}
 
 interface AdminUserDetailProps {
   userId: string | null
@@ -17,6 +56,8 @@ export default function AdminUserDetail({ userId, onClose }: AdminUserDetailProp
   const { message, modal } = App.useApp()
   const queryClient = useQueryClient()
   const { data: user, isLoading } = useAdminUser(userId ?? undefined)
+  const [activityPage, setActivityPage] = useState(1)
+  const { data: activityData } = useAdminUserActivity(userId ?? undefined, activityPage)
   const [busy, setBusy] = useState(false)
   const [pwdOpen, setPwdOpen] = useState(false)
   const [notifyOpen, setNotifyOpen] = useState(false)
@@ -129,7 +170,22 @@ export default function AdminUserDetail({ userId, onClose }: AdminUserDetailProp
   ]
 
   const logColumns = [
-    { title: 'Action', dataIndex: 'action', render: (v: string) => <code className="text-xs text-ink">{v}</code> },
+    {
+      title: 'Action',
+      dataIndex: 'action',
+      render: (v: string) => (
+        <Tag color={actionTone(v)} className="m-0 font-medium">
+          {actionLabel(v)}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Details',
+      dataIndex: 'meta',
+      render: (v: Record<string, unknown> | null | undefined) => (
+        <span className="font-mono text-xs text-ink2">{renderMeta(v)}</span>
+      ),
+    },
     { title: 'IP', dataIndex: 'ip', render: (v: string | null) => <code className="text-xs text-ink2">{v ?? '—'}</code> },
     { title: 'Timestamp', dataIndex: 'createdAt', render: (v: string) => <span className="text-ink2">{formatDateTime(v)}</span> },
   ]
@@ -362,14 +418,21 @@ export default function AdminUserDetail({ userId, onClose }: AdminUserDetailProp
                 },
                 {
                   key: 'logs',
-                  label: `Activity logs (${user.auditLogs?.length ?? 0})`,
+                  label: `Activity logs (${activityData?.total ?? user.auditLogs?.length ?? 0})`,
                   children: (
-                    <Table
+                    <Table<AuditLog>
                       rowKey="id"
                       size="small"
                       columns={logColumns}
-                      dataSource={user.auditLogs ?? []}
-                      pagination={false}
+                      dataSource={activityData?.data ?? user.auditLogs ?? []}
+                      loading={!activityData}
+                      pagination={{
+                        current: activityPage,
+                        pageSize: activityData?.limit ?? 20,
+                        total: activityData?.total ?? 0,
+                        showSizeChanger: false,
+                        onChange: setActivityPage,
+                      }}
                       locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No logged activity" /> }}
                     />
                   ),

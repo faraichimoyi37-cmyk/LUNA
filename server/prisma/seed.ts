@@ -1,5 +1,6 @@
 import { PrismaClient, type TransactionType, type PaymentStatus } from '@prisma/client'
 import { tronAddressFromPayload, keccak256Hex } from '../src/utils/txverify'
+import { hashPassword } from '../src/utils/password'
 
 const prisma = new PrismaClient()
 
@@ -160,8 +161,8 @@ async function main() {
   const daysAgo = (n: number) => new Date(todayStart.getTime() - n * DAY)
   const capNow = (d: Date) => new Date(Math.min(d.getTime(), now.getTime() - 60_000))
 
-  const adminPassword = await Bun.password.hash('Admin@123', { algorithm: 'argon2id' })
-  const userPassword = await Bun.password.hash('Demo@123', { algorithm: 'argon2id' })
+  const adminPassword = await hashPassword('Admin@123')
+  const userPassword = await hashPassword('Demo@123')
 
   // Reset only the managed seed users (admin and any other users are kept).
   await prisma.user.deleteMany({ where: { email: { in: ['demo@luna.com', ...people.map((p, i) => emailOf(p.name, i))] } } })

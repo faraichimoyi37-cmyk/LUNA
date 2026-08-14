@@ -192,6 +192,14 @@ export function useAdminUser(id?: string) {
   })
 }
 
+export function useAdminUserActivity(id?: string, page = 1) {
+  return useQuery({
+    queryKey: [...queryKeys.admin.users, 'activity', id, page],
+    queryFn: () => api.get<Paginated<AuditLog>>(`/admin/users/${id}/activity?page=${page}&limit=20`),
+    enabled: !!id,
+  })
+}
+
 export function useAdminDeposits(page = 1, status = 'ALL') {
   return useQuery({
     queryKey: [...queryKeys.admin.deposits, page, status],

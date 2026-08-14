@@ -1,0 +1,37 @@
+module.exports = {
+  apps: [
+    {
+      name: 'luna-api',
+      script: 'server/dist/index.js',
+      cwd: __dirname,
+      interpreter: 'node',
+      env: {
+        NODE_ENV: 'production',
+      },
+      max_restarts: 100,
+      restart_delay: 3000,
+      exp_backoff_restart_delay: 5000,
+      min_uptime: 10000,
+      kill_timeout: 5000,
+      time: true,
+      instances: 1,
+      autorestart: true,
+      watch: false,
+    },
+    {
+      name: 'luna-tunnel',
+      script: 'C:\\Program Files (x86)\\cloudflared\\cloudflared.exe',
+      args: 'tunnel --url http://localhost:3000',
+      cwd: __dirname,
+      max_restarts: 100,
+      restart_delay: 3000,
+      exp_backoff_restart_delay: 5000,
+      min_uptime: 10000,
+      kill_timeout: 5000,
+      time: true,
+      instances: 1,
+      autorestart: true,
+      watch: false,
+    },
+  ],
+}

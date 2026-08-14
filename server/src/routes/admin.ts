@@ -148,6 +148,27 @@ admin.get('/users/:id', async (c) => {
   return ok(c, sanitizeUser(user))
 })
 
+const activityQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+})
+
+admin.get('/users/:id/activity', validateQuery(activityQuerySchema), async (c) => {
+  const q = c.get('validated') as z.infer<typeof activityQuerySchema>
+  const target = await prisma.user.findUnique({ where: { id: c.req.param('id') }, select: { id: true } })
+  if (!target) throw new ApiError(404, 'User not found')
+  const [items, total] = await Promise.all([
+    prisma.auditLog.findMany({
+      where: { userId: target.id },
+      orderBy: { createdAt: 'desc' },
+      skip: (q.page - 1) * q.limit,
+      take: q.limit,
+    }),
+    prisma.auditLog.count({ where: { userId: target.id } }),
+  ])
+  return ok(c, { data: items, page: q.page, limit: q.limit, total, pages: Math.ceil(total / q.limit) })
+})
+
 const userUpdateSchema = z.object({
   fullname: z.string().min(2).max(80).optional(),
   email: z.string().email().optional(),

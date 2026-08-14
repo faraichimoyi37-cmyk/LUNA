@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+.git
+*.db
+*.db-journal
+*.log
+server/.env
+.env
+.env.*
+!.env.example
+web/dist
+Dockerfile
+.dockerignore

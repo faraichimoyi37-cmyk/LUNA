@@ -5,7 +5,6 @@ import { prisma } from '../config/prisma'
 import { sanitizeUser } from '../utils/user'
 import { ApiError, money, ok } from '../utils/http'
 import { buildProfitSeries, aggregateByPackage } from '../utils/stats'
-import { env } from '../config/env'
 import { requireAuth } from '../middleware/auth'
 import { validateBody } from '../middleware/validate'
 import { logAudit } from '../utils/audit'
@@ -113,9 +112,11 @@ users.get('/referrals', requireAuth, async (c) => {
     prisma.transaction.findMany({ where: { userId: user.id, type: 'REFERRAL' } }),
   ])
   const totalEarned = earnings.reduce((sum, t) => sum + Number(t.amount), 0)
+  const proto = c.req.header('x-forwarded-proto') ?? 'http'
+  const host = c.req.header('Host') ?? 'localhost:3000'
   return ok(c, {
     code: user.referralCode,
-    link: `${env.APP_URL}/register?ref=${user.referralCode}`,
+    link: `${proto}://${host}/register?ref=${user.referralCode}`,
     count: referrals.length,
     totalEarned: money(totalEarned),
     referrals: referrals.map((r) => ({
@@ -264,6 +265,7 @@ users.put('/settings', requireAuth, validateBody(userSettingsSchema), async (c) 
     update: body,
     create: { userId: user.id, ...body },
   })
+  await logAudit({ userId: user.id, actorRole: 'USER', action: 'users.settings', meta: body, ip: c.req.header('x-forwarded-for') })
   return ok(c, updated)
 })
 
@@ -275,6 +277,7 @@ users.post('/security/2fa', requireAuth, validateBody(z.object({ enabled: z.bool
     update: { twoFactorEnabled: body.enabled },
     create: { userId: user.id, twoFactorEnabled: body.enabled },
   })
+  await logAudit({ userId: user.id, actorRole: 'USER', action: 'users.2fa', meta: { enabled: body.enabled }, ip: c.req.header('x-forwarded-for') })
   if (!body.enabled) throw new ApiError(400, 'Two-factor authentication is not fully configured')
   return ok(c, updated)
 })

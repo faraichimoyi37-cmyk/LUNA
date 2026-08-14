@@ -5,6 +5,7 @@ import { prisma } from '../config/prisma'
 import { ApiError, ok } from '../utils/http'
 import { requireAuth } from '../middleware/auth'
 import { validateBody } from '../middleware/validate'
+import { logAudit } from '../utils/audit'
 
 const kyc = new Hono<AppEnv>()
 
@@ -42,6 +43,7 @@ kyc.post('/', requireAuth, validateBody(kycSchema), async (c) => {
       message: 'Your verification documents are under review.',
     },
   })
+  await logAudit({ userId: user.id, actorRole: 'USER', action: 'kyc.submit', meta: { documentType: body.documentType, country: body.country ?? null }, ip: c.req.header('x-forwarded-for') })
   return ok(c, record)
 })
 
